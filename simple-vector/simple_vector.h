@@ -1,5 +1,12 @@
 #pragma once
 
+/*
+ * "хорошая реализация. Не хватает пары проверок, но закрою вам работу"
+ * Спасибо). По тестам всё хорошо? А что бы вы добавили , если бы писали этот код ?
+ */
+
+
+
 #include <cassert>
 #include <initializer_list>
 #include <cstdlib>
@@ -103,11 +110,13 @@ public:
 
     // Возвращает ссылку на элемент с индексом index
     Type& operator[](size_t index) noexcept {
+        assert(index < size_);
         return ptr_[index];
     }
 
     // Возвращает константную ссылку на элемент с индексом index
     const Type& operator[](size_t index) const noexcept {
+        assert(index < size_);
         return ptr_[index];
     }
 
@@ -134,7 +143,11 @@ public:
         size_ = 0;
     }
 
-    void fill(Iterator begin, Iterator end){
+    /*
+     std::fill пытается присвоить значение, по сути выполнив копирование переданного вами элемента.
+     Если элемент не копируемый, как в тесте, то ничего не получится
+    */
+    void Fill(Iterator begin, Iterator end){
         for(auto it_ = begin, end_ = end; it_ != end_; ++it_){
              *it_ = Type{};
         }
@@ -156,10 +169,10 @@ public:
         if (new_size > GetSize()) {
             if (new_size > GetCapacity()) {
                 Reserve(std::max(new_size, 2 * capacity_));
-                fill(ptr_.Get() + GetSize(), ptr_.Get() + GetCapacity());
+                Fill(ptr_.Get() + GetSize(), ptr_.Get() + GetCapacity());
             }
             else {
-                fill(ptr_.Get() + GetSize(), ptr_.Get() + GetCapacity());
+                Fill(ptr_.Get() + GetSize(), ptr_.Get() + GetCapacity());
             }
         }
         size_ = new_size;
@@ -196,12 +209,14 @@ public:
     // Если перед вставкой значения вектор был заполнен полностью,
     // вместимость вектора должна увеличиться вдвое, а для вектора вместимостью 0 стать равной 1
      Iterator Insert(ConstIterator pos, Type&& value){
+         assert(pos <= end() && pos >= begin());
          size_t number_pos = Move(pos);
          ptr_[number_pos] = std::move(value);
          return &ptr_[number_pos];
      }
 
      Iterator Insert(ConstIterator pos, const Type& value){
+         assert(pos <= end() && pos >= begin());
          size_t number_pos = Move(pos);
          ptr_[number_pos] = value;
          return &ptr_[number_pos];
@@ -217,7 +232,7 @@ public:
 
     // Удаляет элемент вектора в указанной позиции
     Iterator Erase(ConstIterator pos){
-        assert(pos != end());
+        assert(pos < end() && pos >= begin());
         Iterator it = &ptr_[std::distance<ConstIterator>(cbegin(), pos)];
         std::move(it + 1, end(), it);
         --size_;
@@ -332,3 +347,4 @@ template <typename Type>
 inline bool operator>=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) {
     return !(lhs < rhs);
 }
+
