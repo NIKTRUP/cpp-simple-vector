@@ -1,2 +1,2 @@
-# cpp-simple-vector
+# SimpleVector
 Примитивная реализация вектора
